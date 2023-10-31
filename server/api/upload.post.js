@@ -4,14 +4,21 @@ import path from "path";
 import fs from "fs";
 
 export default defineEventHandler(async (event) => {
+  const maxFiles = 1;
   const fileSize = 1024 * 1024 * 5; // 5MB
 
   try {
-    const { files, fields } = await readFiles(event, {
-      includeFields: true,
-      maxFiles: 1,
+    const { files } = await readFiles(event, {
+      maxFiles: maxFiles,
       maxFileSize: fileSize,
     });
+
+    if (!Object.keys(files).length) {
+      throw createError({
+        statusMessage: "2001",
+        statusCode: 400,
+      }); 
+    }
     
     for (let index = 0; index < Object.keys(files).length; index++) {
       const filepath = files[index][0].filepath;
@@ -19,8 +26,8 @@ export default defineEventHandler(async (event) => {
 
       if (!mimetype.startsWith("image")) {
         throw createError({
-          statusMessage: "1001",
-          statusCode: 422,
+          statusMessage: "2002",
+          statusCode: 400,
         }); 
       }
       
@@ -34,31 +41,37 @@ export default defineEventHandler(async (event) => {
       message: "Upload image successfully."
     }
   } catch (error) {
-      if (error.message === "1001") {
+    if (error.message === "2001") {
+      throw createError({
+        statusMessage: "File is required.",
+        statusCode: 400,
+      });
+    }
+
+    if (error.message === "2002") {
       throw createError({
         statusMessage: "Only image allowed.",
-        statusCode: 422,
+        statusCode: 400,
       });
     }
 
     if (error.code === formidableErrors.maxFilesExceeded) {
       throw createError({
-        statusMessage: "Can't upload more than one image.",
-        statusCode: 422,
+        statusMessage: `Can't upload more than ${maxFiles} image.`,
+        statusCode: 400,
       });
     }
 
     if (error.code === formidableErrors.biggerThanTotalMaxFileSize) {
       throw createError({
         statusMessage: `File is larger than ${(fileSize / (1024 * 1024))} MB.`,
-        statusCode: 422,
+        statusCode: 400,
       });
     }
 
     throw createError({
-			statusMessage: "An unknown error occurred",
-			statusCode: 500
-		});
+	statusMessage: "An unknown error occurred",
+	statusCode: 500
+    });
   }
 });
-
