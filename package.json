@@ -8,7 +8,9 @@
   },
   "dependencies": {
     "@nuxtjs/tailwindcss": "^6.8.0",
-    "h3-formidable": "^0.3.8",
-    "nuxt": "^3.6.5"
+    "h3-formidable": "^1.0.0"
+  },
+  "devDependencies": {
+    "nuxt": "^3.8.0"
   }
 }
